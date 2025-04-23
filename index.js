@@ -1,0 +1,210 @@
+console.log(environment);
+
+// TODO(developer): Set to client ID and API key from the Developer Console
+const CLIENT_ID = environment.CLIENT_ID;
+const API_KEY = environment.API_KEY;
+const CALLBACK = environment.CALLBACK;
+// Discovery doc URL for APIs used by the quickstart
+const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest';
+
+// Authorization scopes required by the API; multiple scopes can be
+// included, separated by spaces.
+const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.metadata';
+
+let tokenClient;
+let gapiInited = false;
+let gisInited = false;
+
+document.getElementById('authorize_button').style.visibility = 'hidden';
+document.getElementById('signout_button').style.visibility = 'hidden';
+
+/**
+    * Callback after api.js is loaded.
+*/
+function loadGoogleAPI() {
+    console.log("loadGoogleAPI()")
+    console.log(gapi)
+    gapi.load('client:auth', function () {
+        console.log("Init GAPI Client")
+        gapi.client.init({
+            apiKey: API_KEY,
+            clientId: CLIENT_ID,
+            discoveryDocs: [DISCOVERY_DOC]
+        }).then(function () {
+            /*console.log(gapi)
+            console.log(gapi.auth2)
+            const authInstance = gapi.auth2.getAuthInstance();
+            console.log("authInstance", authInstance)
+            authInstance.grantOfflineAccess()
+                .then((response) => {
+                    console.log(response);
+                    //this.data.refreshToken = res.code;
+                });*/
+            gapiInited = true;
+            enableAuthorizeButton();
+        });
+    });
+}
+
+
+/**
+ * Callback after Google Identity Services are loaded.
+ */
+async function loadGoogleTokenClient() {
+    console.log("loadGoogleTokenClient()")
+    tokenClient = await google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: async (credentials) => {
+            console.log("User authorized!")
+            if (credentials.error !== undefined) {
+                throw (credentials);
+            }
+            localStorage.setItem('credentials', JSON.stringify(credentials));
+            sessionInit();
+        }
+    });
+    gisInited = true;
+    enableAuthorizeButton();
+}
+
+/**
+ * Enables user interaction after all libraries are loaded.
+ */
+function enableAuthorizeButton() {
+    console.log("enableAuthorizeButton()")
+    if ((gapiInited && gisInited)) {
+        document.getElementById('authorize_button').style.visibility = 'visible';
+        // Set google credentials automatically if there is a current session (credentials saved on localStorage)
+        let credentials = localStorage.getItem('credentials');
+        if (credentials) {
+            credentials = JSON.parse(credentials);
+            gapi.client.setToken(credentials);
+            sessionInit();
+        }
+    }
+}
+
+function sessionInit() {
+    enableSessionButtons();
+    mapMessages();
+}
+
+function enableSessionButtons() {
+    console.log("enableSessionButtons()")
+    document.getElementById('signout_button').style.visibility = 'visible';
+    document.getElementById('authorize_button').innerText = 'Refresh';
+}
+
+/**
+ *  Sign in the user upon button click.
+ */
+function handleAuthClick() {
+    console.log(gapi.client.getToken())
+    if (gapi.client.getToken() === null) {
+        // Prompt the user to select a Google Account and ask for consent to share their data
+        // when establishing a new session.
+        tokenClient.requestAccessToken({ prompt: 'consent' });
+    } else {
+        // Skip display of account chooser and consent dialog for an existing session.
+        tokenClient.requestAccessToken({ prompt: '' });
+    }
+}
+
+/**
+ * Print all Labels in the authorized user's inbox. If no labels
+ * are found an appropriate message is printed.
+ */
+async function getMessages() {
+    let response;
+    try {
+        response = await gapi.client.gmail.users.messages.list({
+            'userId': 'me',
+        });
+    } catch (err) {
+        console.error(err);
+        //document.getElementById('content').innerText = err.message;
+        return;
+    }
+    const messages = JSON.parse(response.body).messages;
+    if (!messages || messages.length == 0) {
+        document.getElementById('content').innerText = 'No messages found.';
+        return;
+    }
+    return messages;
+}
+
+async function getMessageMetadata(messageId) {
+    let response;
+    try {
+        response = await gapi.client.gmail.users.messages.get({
+            userId: 'me',
+            id: messageId,
+            format: 'metadata',
+            metadataHeaders: ['Subject', 'Date']
+        });
+    } catch (error) {
+        console.error(error);
+        //document.getElementById('content').innerText = error.message;
+        return;
+    }
+    const headers = JSON.parse(response.body).payload.headers;
+    if (!headers) {
+        console.error('No headers found.');
+        return;
+    }
+    const output = headers.reduce((output, header) => {
+        output[header.name] = header.value;
+        return output;
+    }, {});
+    return output;
+}
+
+async function mapMessages() {
+
+    let messages = await getMessages();
+
+    //updateRenderMessagesList(messages.map((message) => `${message.id} ${message.threadId}\n`));
+
+    let updatedMessages = [];
+
+    //Este código ejecuta una petición tras de otra, causando que el tiempo para obtener los datos de 100 mensajes sea muy lento
+
+    //                for (let message of messages) {
+    //                    updatedMessages.push({
+    //                        ...message,
+    //                        ...await getMessageMetadata(message.id)
+    //                    });
+    //                }
+
+
+    // Ejecutar todas las peticiones al mismo tiempo es mucho más rapido.
+
+    await Promise.all(messages.map(async (message) => {
+        updatedMessages.push({
+            ...message,
+            ...await getMessageMetadata(message.id)
+        });
+    }));
+
+    updateRenderMessagesList(updatedMessages.map((message) => `${message.id} ${message.threadId} ${message.Subject} ${message.Date}\n`));
+}
+
+function updateRenderMessagesList(output) {
+    document.getElementById('content').innerText = output;
+}
+
+/**
+ *  Sign out the user upon button click.
+ */
+function handleSignoutClick() {
+    const token = gapi.client.getToken();
+    if (token !== null) {
+        google.accounts.oauth2.revoke(token.access_token);
+        gapi.client.setToken('');
+        document.getElementById('content').innerText = '';
+        document.getElementById('authorize_button').innerText = 'Authorize';
+        document.getElementById('signout_button').style.visibility = 'hidden';
+        localStorage.removeItem('credentials');
+    }
+}
