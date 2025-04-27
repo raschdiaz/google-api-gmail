@@ -2,7 +2,7 @@ console.log(environment);
 
 // TODO(developer): Set to client ID and API key from the Developer Console
 const CLIENT_ID = environment.CLIENT_ID;
-const API_KEY = environment.API_KEY;
+//const API_KEY = environment.API_KEY;
 const CALLBACK = environment.CALLBACK;
 // Discovery doc URL for APIs used by the quickstart
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest';
@@ -27,7 +27,7 @@ function loadGoogleAPI() {
     gapi.load('client:auth', function () {
         console.log("Init GAPI Client")
         gapi.client.init({
-            apiKey: API_KEY,
+            //apiKey: API_KEY,
             clientId: CLIENT_ID,
             discoveryDocs: [DISCOVERY_DOC]
         }).then(function () {
