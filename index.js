@@ -60,6 +60,7 @@ async function loadGoogleTokenClient() {
             if (credentials.error !== undefined) {
                 throw (credentials);
             }
+            // DON'T SAVE THE CREDENTIALS ON LOCAL STORAGE!!!
             localStorage.setItem('credentials', JSON.stringify(credentials));
             sessionInit();
         }
@@ -121,15 +122,13 @@ async function getMessages() {
         response = await gapi.client.gmail.users.messages.list({
             'userId': 'me',
         });
-    } catch (err) {
-        console.error(err);
-        //document.getElementById('content').innerText = err.message;
-        return;
+    } catch (error) {
+        handleError(error);
     }
     const messages = JSON.parse(response.body).messages;
     if (!messages || messages.length == 0) {
         document.getElementById('content').innerText = 'No messages found.';
-        return;
+        return [];
     }
     return messages;
 }
@@ -144,14 +143,11 @@ async function getMessageMetadata(messageId) {
             metadataHeaders: ['Subject', 'Date']
         });
     } catch (error) {
-        console.error(error);
-        //document.getElementById('content').innerText = error.message;
-        return;
+        handleError(error);
     }
     const headers = JSON.parse(response.body).payload.headers;
     if (!headers) {
-        console.error('No headers found.');
-        return;
+        handleError('No headers found.');
     }
     const output = headers.reduce((output, header) => {
         output[header.name] = header.value;
@@ -188,6 +184,7 @@ async function mapMessages() {
     }));
 
     updateRenderMessagesList(updatedMessages.map((message) => `${message.id} ${message.threadId} ${message.Subject} ${message.Date}\n`));
+
 }
 
 function updateRenderMessagesList(output) {
@@ -207,4 +204,16 @@ function handleSignoutClick() {
         document.getElementById('signout_button').style.visibility = 'hidden';
         localStorage.removeItem('credentials');
     }
+}
+
+function handleError(error) {
+    console.error(error);
+    console.log(error.status);
+    if (error.status === 401) {
+        // UNAUTHENTICATED
+        // There is not a way to get and use a "refresh_token" using this logic on javascript https://stackoverflow.com/a/24468307/6774579
+        document.getElementById("authorize_button").click();
+    }
+    //document.getElementById('content').innerText = err.message;
+    throw error;
 }
