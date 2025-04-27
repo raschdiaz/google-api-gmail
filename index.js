@@ -17,6 +17,7 @@ let gisInited = false;
 
 document.getElementById('authorize_button').style.visibility = 'hidden';
 document.getElementById('signout_button').style.visibility = 'hidden';
+document.getElementById('paginator').style.visibility = 'hidden';
 
 /**
     * Callback after api.js is loaded.
@@ -76,6 +77,7 @@ function enableAuthorizeButton() {
     console.log("enableAuthorizeButton()")
     if ((gapiInited && gisInited)) {
         document.getElementById('authorize_button').style.visibility = 'visible';
+        document.getElementById('paginator').style.visibility = 'visible';
         // Set google credentials automatically if there is a current session (credentials saved on localStorage)
         let credentials = localStorage.getItem('credentials');
         if (credentials) {
@@ -116,21 +118,23 @@ function handleAuthClick() {
  * Print all Labels in the authorized user's inbox. If no labels
  * are found an appropriate message is printed.
  */
-async function getMessages() {
+async function getMessages(queryParams) {
     let response;
     try {
         response = await gapi.client.gmail.users.messages.list({
             'userId': 'me',
+            ...queryParams
         });
     } catch (error) {
         handleError(error);
     }
-    const messages = JSON.parse(response.body).messages;
+    const parsedResponse = JSON.parse(response.body);
+    const messages = parsedResponse.messages;
     if (!messages || messages.length == 0) {
         document.getElementById('content').innerText = 'No messages found.';
         return [];
     }
-    return messages;
+    return parsedResponse;
 }
 
 async function getMessageMetadata(messageId) {
@@ -156,10 +160,10 @@ async function getMessageMetadata(messageId) {
     return output;
 }
 
-async function mapMessages() {
+async function mapMessages(queryParams) {
 
-    let messages = await getMessages();
-
+    let response = await getMessages(queryParams);
+    console.log(response)
     //updateRenderMessagesList(messages.map((message) => `${message.id} ${message.threadId}\n`));
 
     let updatedMessages = [];
@@ -173,10 +177,10 @@ async function mapMessages() {
     //                    });
     //                }
 
-
+    localStorage.setItem('nextPageToken', response.nextPageToken);
     // Ejecutar todas las peticiones al mismo tiempo es mucho más rapido.
 
-    await Promise.all(messages.map(async (message) => {
+    await Promise.all(response.messages.map(async (message) => {
         updatedMessages.push({
             ...message,
             ...await getMessageMetadata(message.id)
@@ -200,9 +204,11 @@ function handleSignoutClick() {
         google.accounts.oauth2.revoke(token.access_token);
         gapi.client.setToken('');
         document.getElementById('content').innerText = '';
+        document.getElementById('paginator').style.visibility = 'hidden';
         document.getElementById('authorize_button').innerText = 'Authorize';
         document.getElementById('signout_button').style.visibility = 'hidden';
         localStorage.removeItem('credentials');
+        localStorage.removeItem('nextPageToken');
     }
 }
 
@@ -216,4 +222,13 @@ function handleError(error) {
     }
     //document.getElementById('content').innerText = err.message;
     throw error;
+}
+
+function getNewerMessages(params) {
+    
+}
+
+function getOlderMessages() {
+   var pageToken = localStorage.getItem('nextPageToken');
+   mapMessages({ pageToken });
 }

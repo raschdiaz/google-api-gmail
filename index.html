@@ -21,10 +21,14 @@ Caracteristicas:
 3. Obtener fecha recibida del mensaje (hecho).
 3.1 Optimizar peticiones para obtener los nombres (hecho).
 4. Paginación.
+4.1 Cambiar pagina hacia adelante (hecho).
+4.2 Cambiar pagina hacia atras.
 5. Mantener sesión activa. (hecho)
 6. Renovar sesión. (hecho)
 7. Implementar variables de entorno. (hecho)
 8. Solventar problema HTTP: 429 - STATUS: RESOURCE_EXHAUSTED
+9. Remover credenciales innecesarias (API_KEY). (hecho)
+10. Filtro de búsqueda.
 
 -->
 <!DOCTYPE html>
@@ -41,6 +45,11 @@ Caracteristicas:
     <!--Add buttons to initiate auth sequence and sign out-->
     <button id="authorize_button" onclick="handleAuthClick()">Authorize</button>
     <button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
+
+    <div id="paginator">
+        <button id="newer-button" onclick="getNewerMessages()"><</button>
+        <button id="older-button" onclick="getOlderMessages()">></button>
+    </div>
 
     <pre id="content" style="white-space: pre-wrap;"></pre>
 
