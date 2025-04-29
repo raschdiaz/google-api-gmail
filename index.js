@@ -18,6 +18,7 @@ let gisInited = false;
 document.getElementById('authorize_button').style.visibility = 'hidden';
 document.getElementById('signout_button').style.visibility = 'hidden';
 document.getElementById('paginator').style.visibility = 'hidden';
+localStorage.removeItem('nextPageToken');
 
 /**
     * Callback after api.js is loaded.
@@ -32,15 +33,6 @@ function loadGoogleAPI() {
             clientId: CLIENT_ID,
             discoveryDocs: [DISCOVERY_DOC]
         }).then(function () {
-            /*console.log(gapi)
-            console.log(gapi.auth2)
-            const authInstance = gapi.auth2.getAuthInstance();
-            console.log("authInstance", authInstance)
-            authInstance.grantOfflineAccess()
-                .then((response) => {
-                    console.log(response);
-                    //this.data.refreshToken = res.code;
-                });*/
             gapiInited = true;
             enableAuthorizeButton();
         });
@@ -90,7 +82,7 @@ function enableAuthorizeButton() {
 
 function sessionInit() {
     enableSessionButtons();
-    mapMessages();
+    mapMessages({}, true);
 }
 
 function enableSessionButtons() {
@@ -160,25 +152,24 @@ async function getMessageMetadata(messageId) {
     return output;
 }
 
-async function mapMessages(queryParams) {
+async function mapMessages(queryParams, nextPage) {
 
     let response = await getMessages(queryParams);
-    console.log(response)
-    //updateRenderMessagesList(messages.map((message) => `${message.id} ${message.threadId}\n`));
 
     let updatedMessages = [];
 
-    //Este código ejecuta una petición tras de otra, causando que el tiempo para obtener los datos de 100 mensajes sea muy lento
+    // Saver nextPageToken on response
+    if (nextPage) {
+        if (localStorage.getItem('nextPageToken')) {
+            let currentPages = localStorage.getItem('nextPageToken').split(",");
+            currentPages.push(response.nextPageToken);
+            localStorage.setItem('nextPageToken', currentPages.join(","));
+        } else {
+            localStorage.setItem('nextPageToken', [response.nextPageToken]);
+        }
+    }
 
-    //                for (let message of messages) {
-    //                    updatedMessages.push({
-    //                        ...message,
-    //                        ...await getMessageMetadata(message.id)
-    //                    });
-    //                }
-
-    localStorage.setItem('nextPageToken', response.nextPageToken);
-    // Ejecutar todas las peticiones al mismo tiempo es mucho más rapido.
+    // Execute all the request at the same time (its faster)
 
     await Promise.all(response.messages.map(async (message) => {
         updatedMessages.push({
@@ -187,7 +178,10 @@ async function mapMessages(queryParams) {
         });
     }));
 
-    updateRenderMessagesList(updatedMessages.map((message) => `${message.id} ${message.threadId} ${message.Subject} ${message.Date}\n`));
+    // Sort messages list by date
+    updatedMessages.sort((a, b) => new Date(b.Date) - new Date(a.Date));
+
+    updateRenderMessagesList(updatedMessages.map((message) => `${message.Date} ${message.Subject} ${message.id} ${message.threadId} \n`));
 
 }
 
@@ -214,21 +208,31 @@ function handleSignoutClick() {
 
 function handleError(error) {
     console.error(error);
-    console.log(error.status);
     if (error.status === 401) {
         // UNAUTHENTICATED
         // There is not a way to get and use a "refresh_token" using this logic on javascript https://stackoverflow.com/a/24468307/6774579
         document.getElementById("authorize_button").click();
     }
-    //document.getElementById('content').innerText = err.message;
     throw error;
 }
 
-function getNewerMessages(params) {
-    
+function getNewerMessages() {
+    let currentPages = localStorage.getItem('nextPageToken').split(",");
+    if (currentPages.length > 1) {
+        // Get messages for the previous page
+        currentPages = currentPages.slice(0, -1);
+        localStorage.setItem('nextPageToken', currentPages.join(","));
+        let pageToken = currentPages[currentPages.length - 1];
+        mapMessages({ pageToken });
+    } else if (currentPages.length === 1) {
+        // Get messages from the first page
+        localStorage.setItem('nextPageToken', []);
+        mapMessages({}, true);
+    }
 }
 
 function getOlderMessages() {
-   var pageToken = localStorage.getItem('nextPageToken');
-   mapMessages({ pageToken });
+    let currentPages = localStorage.getItem('nextPageToken').split(",");
+    let pageToken = currentPages[currentPages.length - 1];
+    mapMessages({ pageToken }, true);
 }

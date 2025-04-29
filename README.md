@@ -21,11 +21,11 @@ Caracteristicas:
 
 :white_check_mark: Optimizar peticiones para obtener los nombres.
 
-:white_square_button: Paginación.
+:white_check_mark: Paginación.
 
 :white_check_mark: Cambiar pagina hacia adelante.
 
-:white_square_button: Cambiar pagina hacia atrás.
+:white_check_mark: Cambiar pagina hacia atrás.
 
 :white_check_mark: Mantener sesión activa.
 
@@ -38,3 +38,5 @@ Caracteristicas:
 :white_check_mark: Remover credenciales innecesarias (API_KEY).
 
 :white_square_button: Filtro de búsqueda.
+
+:white_square_button: Botón recargar lista.
