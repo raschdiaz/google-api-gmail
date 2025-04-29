@@ -1,5 +1,4 @@
-Google Gmail API docs: https://developers.google.com/workspace/gmail/api/guides
-https://developers.google.com/workspace/gmail/api/reference/rest
+Google Gmail API docs: https://developers.google.com/workspace/gmail/api/guides https://developers.google.com/workspace/gmail/api/reference/rest
 Google Cloud Console: https://console.cloud.google.com
 
 Intrucciones:
@@ -14,16 +13,16 @@ Intrucciones:
 
 Caracteristicas:
 
-1. Obtener mensajes. (hecho)
-2. Obtener titulo del mensaje (hecho).
-3. Obtener fecha recibida del mensaje (hecho).
-3.1 Optimizar peticiones para obtener los nombres (hecho).
-4. Paginación.
-4.1 Cambiar pagina hacia adelante (hecho).
-4.2 Cambiar pagina hacia atras.
-5. Mantener sesión activa. (hecho)
-6. Renovar sesión. (hecho)
-7. Implementar variables de entorno. (hecho)
-8. Solventar problema HTTP: 429 - STATUS: RESOURCE_EXHAUSTED
-9. Remover credenciales innecesarias (API_KEY). (hecho)
-10. Filtro de búsqueda.
+[x] Obtener mensajes.
+[x] Obtener titulo del mensaje.
+[x] Obtener fecha recibida del mensaje.
+[x] Optimizar peticiones para obtener los nombres.
+[] Paginación.
+    [x] Cambiar pagina hacia adelante.
+    [] Cambiar pagina hacia atrás.
+[x] Mantener sesión activa.
+[x] Renovar sesión.
+[x] Implementar variables de entorno.
+[] Solventar problema HTTP: 429 - STATUS: RESOURCE_EXHAUSTED
+[x] Remover credenciales innecesarias (API_KEY).
+[] Filtro de búsqueda.
