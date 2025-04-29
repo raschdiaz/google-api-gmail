@@ -14,15 +14,27 @@ Intrucciones:
 Caracteristicas:
 
 :white_check_mark: Obtener mensajes.
+
 :white_check_mark: Obtener titulo del mensaje.
+
 :white_check_mark: Obtener fecha recibida del mensaje.
+
 :white_check_mark: Optimizar peticiones para obtener los nombres.
+
 :white_square_button: Paginación.
+
     :white_check_mark: Cambiar pagina hacia adelante.
+
     :white_square_button: Cambiar pagina hacia atrás.
+
 :white_check_mark: Mantener sesión activa.
+
 :white_check_mark: Renovar sesión.
+
 :white_check_mark: Implementar variables de entorno.
+
 :white_square_button: Solventar problema HTTP: 429 - STATUS: RESOURCE_EXHAUSTED
+
 :white_check_mark: Remover credenciales innecesarias (API_KEY).
+
 :white_square_button: Filtro de búsqueda.
