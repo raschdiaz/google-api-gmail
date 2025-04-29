@@ -23,9 +23,9 @@ Caracteristicas:
 
 :white_square_button: Paginación.
 
-    :white_check_mark: Cambiar pagina hacia adelante.
+:white_check_mark: Cambiar pagina hacia adelante.
 
-    :white_square_button: Cambiar pagina hacia atrás.
+:white_square_button: Cambiar pagina hacia atrás.
 
 :white_check_mark: Mantener sesión activa.
 
