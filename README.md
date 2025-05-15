@@ -13,36 +13,42 @@ Intrucciones:
 
 Caracteristicas:
 
-:white_check_mark: Obtener mensajes.
+:pushpin: Lista de mensajes.
 
-:white_check_mark: Obtener titulo del mensaje.
+:white_check_mark: - Obtener titulo del mensaje.
 
-:white_check_mark: Obtener fecha recibida del mensaje.
+:white_check_mark: - Obtener fecha recibida del mensaje.
 
-:white_check_mark: Optimizar peticiones para obtener los nombres.
-
-:white_check_mark: Paginación.
-
-    :white_check_mark: Cambiar pagina hacia adelante.
-
-    :white_check_mark: Cambiar pagina hacia atrás.
-
-    :white_square_button: Permitir al usuario modificar la cantidad de mensajes a mostrar por página.
-
-:white_check_mark: Mantener sesión activa.
-
-:white_check_mark: Renovar sesión.
-
-:white_check_mark: Implementar variables de entorno.
-
-:white_square_button: Solventar problema HTTP: 429 - STATUS: RESOURCE_EXHAUSTED
-
-:white_check_mark: Remover credenciales innecesarias (API_KEY).
+:white_check_mark: - Optimizar peticiones para obtener los nombres.
 
 :white_square_button: Filtro de búsqueda.
 
 :white_square_button: Botón recargar lista.
 
-:white_square_button: Vista detalle del correo.
+:pushpin: Paginación.
 
-    :white_square_button: Editor de texto.
+:white_check_mark: - Cambiar pagina hacia adelante.
+
+:white_check_mark: - Cambiar pagina hacia atrás.
+
+:white_square_button: - Permitir al usuario modificar la cantidad de mensajes a mostrar por página.
+
+:pushpin: Sesión.
+
+:white_check_mark: Mantener sesión activa.
+
+:white_check_mark: Renovar sesión.
+
+:pushpin: Vista detalle del correo.
+
+:white_square_button: - Editor de texto.
+
+:white_square_button: Soporte en dispositivos móviles
+
+:pushpin: Otros.
+
+:white_check_mark: Implementar variables de entorno.
+
+:white_check_mark: Remover credenciales innecesarias (API_KEY).
+
+:white_square_button: Solventar problema HTTP: 429 - STATUS: RESOURCE_EXHAUSTED
