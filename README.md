@@ -15,11 +15,11 @@ Caracteristicas:
 
 :pushpin: Lista de mensajes.
 
-:white_check_mark: - Obtener titulo del mensaje.
+:white_check_mark: Obtener titulo del mensaje.
 
-:white_check_mark: - Obtener fecha recibida del mensaje.
+:white_check_mark: Obtener fecha recibida del mensaje.
 
-:white_check_mark: - Optimizar peticiones para obtener los nombres.
+:white_check_mark: Optimizar peticiones para obtener los nombres.
 
 :white_square_button: Filtro de búsqueda.
 
@@ -27,11 +27,11 @@ Caracteristicas:
 
 :pushpin: Paginación.
 
-:white_check_mark: - Cambiar pagina hacia adelante.
+:white_check_mark: Cambiar pagina hacia adelante.
 
-:white_check_mark: - Cambiar pagina hacia atrás.
+:white_check_mark: Cambiar pagina hacia atrás.
 
-:white_square_button: - Permitir al usuario modificar la cantidad de mensajes a mostrar por página.
+:white_square_button: Permitir al usuario modificar la cantidad de mensajes a mostrar por página.
 
 :pushpin: Sesión.
 
@@ -41,7 +41,7 @@ Caracteristicas:
 
 :pushpin: Vista detalle del correo.
 
-:white_square_button: - Editor de texto.
+:white_square_button: Editor de texto.
 
 :white_square_button: Soporte en dispositivos móviles
 
