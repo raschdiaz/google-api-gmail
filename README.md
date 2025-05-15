@@ -23,9 +23,11 @@ Caracteristicas:
 
 :white_check_mark: Paginación.
 
-:white_check_mark: Cambiar pagina hacia adelante.
+    :white_check_mark: Cambiar pagina hacia adelante.
 
-:white_check_mark: Cambiar pagina hacia atrás.
+    :white_check_mark: Cambiar pagina hacia atrás.
+
+    :white_square_button: Permitir al usuario modificar la cantidad de mensajes a mostrar por página.
 
 :white_check_mark: Mantener sesión activa.
 
@@ -40,3 +42,7 @@ Caracteristicas:
 :white_square_button: Filtro de búsqueda.
 
 :white_square_button: Botón recargar lista.
+
+:white_square_button: Vista detalle del correo.
+
+    :white_square_button: Editor de texto.
