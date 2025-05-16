@@ -21,7 +21,7 @@ Caracteristicas:
 
 :white_check_mark: Optimizar peticiones para obtener los nombres.
 
-:white_square_button: Filtro de búsqueda.
+:white_check_mark: Filtro de búsqueda.
 
 :white_square_button: Botón recargar lista.
 
@@ -33,6 +33,8 @@ Caracteristicas:
 
 :white_square_button: Permitir al usuario modificar la cantidad de mensajes a mostrar por página.
 
+:white_check_mark: Filtro de búsqueda.
+
 :pushpin: Sesión.
 
 :white_check_mark: Mantener sesión activa.
@@ -43,7 +45,7 @@ Caracteristicas:
 
 :white_square_button: Editor de texto.
 
-:white_square_button: Soporte en dispositivos móviles
+:white_square_button: Soporte para dispositivos móviles.
 
 :pushpin: Otros.
 

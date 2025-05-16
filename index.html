@@ -11,9 +11,12 @@
 
     <!--Add buttons to initiate auth sequence and sign out-->
     <button id="authorize_button" onclick="handleAuthClick()">Authorize</button>
-    <button id="signout_button" onclick="handleSignoutClick()">Sign Out</button>
-
-    <div id="paginator">
+    <button id="signout_button" onclick="handleSignoutClick()" style="visibility: hidden;">Sign Out</button>
+    <div id="search" style="visibility: hidden;">
+        <input id="search-field" type="text" />
+        <button id="search-button" onclick="filterMessages(document.getElementById('search-field').value)">Search</button>
+    </div>
+    <div id="paginator" style="visibility: hidden;">
         <button id="newer-button" onclick="getNewerMessages()"><</button>
         <button id="older-button" onclick="getOlderMessages()">></button>
     </div>

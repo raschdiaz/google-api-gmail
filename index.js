@@ -9,15 +9,12 @@ const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/gmail/v1/res
 
 // Authorization scopes required by the API; multiple scopes can be
 // included, separated by spaces.
-const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.metadata';
+const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly';// https://www.googleapis.com/auth/gmail.metadata';
 
 let tokenClient;
 let gapiInited = false;
 let gisInited = false;
 
-document.getElementById('authorize_button').style.visibility = 'hidden';
-document.getElementById('signout_button').style.visibility = 'hidden';
-document.getElementById('paginator').style.visibility = 'hidden';
 localStorage.removeItem('nextPageToken');
 
 /**
@@ -25,16 +22,27 @@ localStorage.removeItem('nextPageToken');
 */
 function loadGoogleAPI() {
     console.log("loadGoogleAPI()")
-    console.log(gapi)
     gapi.load('client:auth', function () {
         console.log("Init GAPI Client")
         gapi.client.init({
-            //apiKey: API_KEY,
             clientId: CLIENT_ID,
             discoveryDocs: [DISCOVERY_DOC]
         }).then(function () {
             gapiInited = true;
-            enableAuthorizeButton();
+            // Set google credentials automatically if there is a current session (credentials saved on localStorage)
+            let credentials = localStorage.getItem('credentials');
+            if (credentials) {
+                credentials = JSON.parse(credentials);
+                gapi.client.setToken(credentials);
+                sessionInit();
+            } else {
+                if (gapiInited && gisInited) {
+                    sessionInit();
+                }
+            }
+        }, function (error) {
+            console.log(error);
+            throw error;
         });
     });
 }
@@ -43,51 +51,44 @@ function loadGoogleAPI() {
 /**
  * Callback after Google Identity Services are loaded.
  */
-async function loadGoogleTokenClient() {
+function loadGoogleTokenClient() {
     console.log("loadGoogleTokenClient()")
-    tokenClient = await google.accounts.oauth2.initTokenClient({
+    tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
         callback: async (credentials) => {
-            console.log("User authorized!")
+            gisInited = true;
             if (credentials.error !== undefined) {
                 throw (credentials);
             }
             // DON'T SAVE THE CREDENTIALS ON LOCAL STORAGE!!!
             localStorage.setItem('credentials', JSON.stringify(credentials));
-            sessionInit();
+            if (gapiInited && gisInited) {
+                sessionInit();
+            }
+        },
+        error_callback: (error) => {
+            console.error(error);
+            throw (error)
         }
     });
-    gisInited = true;
-    enableAuthorizeButton();
+}
+
+
+function sessionInit() {
+    console.log("sessionInit()");
+    enableSessionButtons();
+    mapMessages({}, true);
 }
 
 /**
  * Enables user interaction after all libraries are loaded.
  */
-function enableAuthorizeButton() {
-    console.log("enableAuthorizeButton()")
-    if ((gapiInited && gisInited)) {
-        document.getElementById('authorize_button').style.visibility = 'visible';
-        document.getElementById('paginator').style.visibility = 'visible';
-        // Set google credentials automatically if there is a current session (credentials saved on localStorage)
-        let credentials = localStorage.getItem('credentials');
-        if (credentials) {
-            credentials = JSON.parse(credentials);
-            gapi.client.setToken(credentials);
-            sessionInit();
-        }
-    }
-}
-
-function sessionInit() {
-    enableSessionButtons();
-    mapMessages({}, true);
-}
-
 function enableSessionButtons() {
     console.log("enableSessionButtons()")
     document.getElementById('signout_button').style.visibility = 'visible';
+    document.getElementById('search').style.visibility = 'visible';
+    document.getElementById('paginator').style.visibility = 'visible';
     document.getElementById('authorize_button').innerText = 'Refresh';
 }
 
@@ -95,7 +96,7 @@ function enableSessionButtons() {
  *  Sign in the user upon button click.
  */
 function handleAuthClick() {
-    console.log(gapi.client.getToken())
+    console.log("handleAuthClick()")
     if (gapi.client.getToken() === null) {
         // Prompt the user to select a Google Account and ask for consent to share their data
         // when establishing a new session.
@@ -201,6 +202,8 @@ function handleSignoutClick() {
         document.getElementById('paginator').style.visibility = 'hidden';
         document.getElementById('authorize_button').innerText = 'Authorize';
         document.getElementById('signout_button').style.visibility = 'hidden';
+        document.getElementById('search').style.visibility = 'hidden';
+
         localStorage.removeItem('credentials');
         localStorage.removeItem('nextPageToken');
     }
@@ -235,4 +238,8 @@ function getOlderMessages() {
     let currentPages = localStorage.getItem('nextPageToken').split(",");
     let pageToken = currentPages[currentPages.length - 1];
     mapMessages({ pageToken }, true);
+}
+
+function filterMessages(q) {
+    mapMessages({ q });
 }
