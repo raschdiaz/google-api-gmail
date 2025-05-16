@@ -33,7 +33,7 @@ Caracteristicas:
 
 :white_square_button: Permitir al usuario modificar la cantidad de mensajes a mostrar por página.
 
-:white_check_mark: Filtro de búsqueda.
+:white_square_button: Filtro de búsqueda.
 
 :pushpin: Sesión.
 
