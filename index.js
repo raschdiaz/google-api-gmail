@@ -154,7 +154,7 @@ async function getMessageMetadata(messageId) {
     return output;
 }
 
-async function mapMessages(queryParams, nextPage) {
+async function mapMessages(queryParams, nextPage = false) {
 
     // Save queryParams to use it on "refresh" flow
     localStorage.setItem('queryParams', JSON.stringify(queryParams));
@@ -224,6 +224,12 @@ function handleError(error) {
     throw error;
 }
 
+function requestMessages(searchParams, nextPage) {
+    let queryParams = localStorage.getItem('queryParams');
+    queryParams = JSON.parse(queryParams);
+    mapMessages({ ...queryParams, ...searchParams }, nextPage);
+}
+
 function getNewerMessages() {
     let currentPages = localStorage.getItem('nextPageToken').split(",");
     if (currentPages.length > 1) {
@@ -231,26 +237,28 @@ function getNewerMessages() {
         currentPages = currentPages.slice(0, -1);
         localStorage.setItem('nextPageToken', currentPages.join(","));
         let pageToken = currentPages[currentPages.length - 1];
-        mapMessages({ pageToken });
+        requestMessages({ pageToken });
     } else if (currentPages.length === 1) {
         // Get messages from the first page
         localStorage.setItem('nextPageToken', []);
-        mapMessages({}, true);
+        requestMessages({}, true);
     }
 }
 
 function getOlderMessages() {
     let currentPages = localStorage.getItem('nextPageToken').split(",");
     let pageToken = currentPages[currentPages.length - 1];
-    mapMessages({ pageToken }, true);
+    requestMessages({ pageToken }, true);
 }
 
 function filterMessages(q) {
-    mapMessages({ q });
+    requestMessages({ q });
 }
 
 function handleRefreshClick() {
-    let queryParams = localStorage.getItem('queryParams');
-    queryParams = JSON.parse(queryParams);
-    mapMessages(queryParams);
+    requestMessages({});
+}
+
+function setPage(pageLength) {
+    requestMessages({ maxResults: pageLength });
 }
