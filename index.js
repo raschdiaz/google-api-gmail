@@ -90,6 +90,7 @@ function enableSessionButtons() {
     document.getElementById('search').style.visibility = 'visible';
     document.getElementById('paginator').style.visibility = 'visible';
     document.getElementById('authorize_button').innerText = 'Refresh';
+    document.getElementById('refresh_button').style.visibility = 'visible';
 }
 
 /**
@@ -155,11 +156,14 @@ async function getMessageMetadata(messageId) {
 
 async function mapMessages(queryParams, nextPage) {
 
+    // Save queryParams to use it on "refresh" flow
+    localStorage.setItem('queryParams', JSON.stringify(queryParams));
+
     let response = await getMessages(queryParams);
 
     let updatedMessages = [];
 
-    // Saver nextPageToken on response
+    // Save nextPageToken on response
     if (nextPage) {
         if (localStorage.getItem('nextPageToken')) {
             let currentPages = localStorage.getItem('nextPageToken').split(",");
@@ -203,6 +207,7 @@ function handleSignoutClick() {
         document.getElementById('authorize_button').innerText = 'Authorize';
         document.getElementById('signout_button').style.visibility = 'hidden';
         document.getElementById('search').style.visibility = 'hidden';
+        document.getElementById('refresh_button').style.visibility = 'hidden';
 
         localStorage.removeItem('credentials');
         localStorage.removeItem('nextPageToken');
@@ -242,4 +247,10 @@ function getOlderMessages() {
 
 function filterMessages(q) {
     mapMessages({ q });
+}
+
+function handleRefreshClick() {
+    let queryParams = localStorage.getItem('queryParams');
+    queryParams = JSON.parse(queryParams);
+    mapMessages(queryParams);
 }

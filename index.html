@@ -16,6 +16,7 @@
         <input id="search-field" type="text" />
         <button id="search-button" onclick="filterMessages(document.getElementById('search-field').value)">Search</button>
     </div>
+    <button id="refresh_button" onclick="handleRefreshClick()" style="visibility: hidden;">Reload</button>
     <div id="paginator" style="visibility: hidden;">
         <button id="newer-button" onclick="getNewerMessages()"><</button>
         <button id="older-button" onclick="getOlderMessages()">></button>
