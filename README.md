@@ -23,7 +23,7 @@ Caracteristicas:
 
 :white_check_mark: Filtro de búsqueda.
 
-:white_square_button: Botón recargar lista.
+:white_check_mark: Botón recargar lista.
 
 :pushpin: Paginación.
 
