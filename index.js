@@ -154,14 +154,14 @@ async function getMessageMetadata(messageId) {
     return output;
 }
 
+let messagesList = [];
+
 async function mapMessages(queryParams, nextPage = false) {
 
     // Save queryParams to use it on "refresh" flow
     localStorage.setItem('queryParams', JSON.stringify(queryParams));
 
     let response = await getMessages(queryParams);
-
-    let updatedMessages = [];
 
     // Save nextPageToken on response
     if (nextPage) {
@@ -174,19 +174,60 @@ async function mapMessages(queryParams, nextPage = false) {
         }
     }
 
-    // Execute all the request at the same time (its faster)
+    let batches = [];
+    let chunkedMessages = splitArrayIntoChunks(response.messages, 100);
+    messagesList = [];
 
-    await Promise.all(response.messages.map(async (message) => {
-        updatedMessages.push({
-            ...message,
-            ...await getMessageMetadata(message.id)
+    for (const [key, chunk] of chunkedMessages.entries()) {
+
+        // You're limited to 100 calls in a single batch request. If you must make more calls than that, use multiple batch requests.
+        batches[key] = gapi.client.newBatch();
+
+        chunk.map((message) => {
+            const request = gapi.client.gmail.users.messages.get({
+                userId: 'me',
+                id: message.id,
+                format: 'metadata',
+                metadataHeaders: ['Subject', 'Date']
+            });
+            batches[key].add(request);
         });
-    }));
+
+        await new Promise((resolve, reject) => {
+
+            batches[key].execute(function (responseMap, rawBatchResponse) {
+                if (responseMap.result?.error) {
+                    reject(responseMap.result.error);
+                    throw responseMap.result.error;
+                }
+
+                // REVISAR!!! Algunos mensajer retornan error ".filter((message) => (message.result))."
+                let mappedMessages = JSON.parse(rawBatchResponse).filter((message) => (message.result)).map((message) => {
+                    let result = message.result;
+                    let payload = result.payload;
+                    let headers = payload.headers;
+                    console.log(headers)
+                    return {
+                        Subject: headers.find(header => header.name == "Subject")?.value || "",
+                        Date: headers.find(header => header.name == "Date")?.value || "",
+                        id: message.id,
+                        threadId: result.threadId
+                    }
+                })
+
+                messagesList.push(...mappedMessages);
+                resolve();
+
+            });
+
+        })
+
+    }
 
     // Sort messages list by date
-    updatedMessages.sort((a, b) => new Date(b.Date) - new Date(a.Date));
-
-    updateRenderMessagesList(updatedMessages.map((message) => `${message.Date} ${message.Subject} ${message.id} ${message.threadId} \n`));
+    messagesList.sort((a, b) => new Date(b.Date) - new Date(a.Date));
+    console.log(messagesList.length)
+    updateRenderMessagesList(messagesList.map((message) => `${message.Date} ${message.Subject} ${message.id} ${message.threadId} \n`))
 
 }
 
@@ -214,14 +255,14 @@ function handleSignoutClick() {
     }
 }
 
-function handleError(error) {
-    console.error(error);
+async function handleError(error) {
     if (error.status === 401) {
         // UNAUTHENTICATED
         // There is not a way to get and use a "refresh_token" using this logic on javascript https://stackoverflow.com/a/24468307/6774579
         document.getElementById("authorize_button").click();
+    } else {
+        throw error;
     }
-    throw error;
 }
 
 function requestMessages(searchParams, nextPage) {
@@ -261,4 +302,12 @@ function handleRefreshClick() {
 
 function setPage(pageLength) {
     requestMessages({ maxResults: pageLength });
+}
+
+function splitArrayIntoChunks(arr, chunkSize) {
+    let result = [];
+    for (let i = 0; i < arr.length; i += chunkSize) {
+        result.push(arr.slice(i, i + chunkSize));
+    }
+    return result;
 }

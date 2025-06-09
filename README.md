@@ -25,6 +25,12 @@ Caracteristicas:
 
 :white_check_mark: Botón recargar lista.
 
+:white_check_mark: Solventar problema HTTP: 429 - STATUS: RESOURCE_EXHAUSTED
+
+:white_square_button: Revisar error al obtener ciertos mensajes.
+
+:white_square_button: Agregar indicador de carga al realizar peticiones.
+
 :pushpin: Paginación.
 
 :white_check_mark: Cambiar pagina hacia adelante.
@@ -43,12 +49,10 @@ Caracteristicas:
 
 :white_square_button: Editor de texto.
 
-:white_square_button: Soporte para dispositivos móviles.
-
 :pushpin: Otros.
 
 :white_check_mark: Implementar variables de entorno.
 
 :white_check_mark: Remover credenciales innecesarias (API_KEY).
 
-:white_square_button: Solventar problema HTTP: 429 - STATUS: RESOURCE_EXHAUSTED
+:white_square_button: Soporte para dispositivos móviles.
