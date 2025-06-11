@@ -27,9 +27,9 @@ Caracteristicas:
 
 :white_check_mark: Solventar problema HTTP: 429 - STATUS: RESOURCE_EXHAUSTED
 
-:white_square_button: Revisar error al obtener ciertos mensajes.
+:white_check_mark: Agregar indicador de carga al realizar peticiones.
 
-:white_square_button: Agregar indicador de carga al realizar peticiones.
+:white_square_button: Revisar error al obtener ciertos mensajes.
 
 :pushpin: Paginación.
 

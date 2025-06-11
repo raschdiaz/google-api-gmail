@@ -78,7 +78,7 @@ function loadGoogleTokenClient() {
 function sessionInit() {
     console.log("sessionInit()");
     enableSessionButtons();
-    mapMessages({}, true);
+    requestMessages({}, true);
 }
 
 /**
@@ -175,7 +175,7 @@ async function mapMessages(queryParams, nextPage = false) {
     }
 
     let batches = [];
-    let chunkedMessages = splitArrayIntoChunks(response.messages, 100);
+    let chunkedMessages = splitArrayIntoChunks(response.messages, 50);
     messagesList = [];
 
     for (const [key, chunk] of chunkedMessages.entries()) {
@@ -200,9 +200,13 @@ async function mapMessages(queryParams, nextPage = false) {
                     reject(responseMap.result.error);
                     throw responseMap.result.error;
                 }
-
-                // REVISAR!!! Algunos mensajer retornan error ".filter((message) => (message.result))."
-                let mappedMessages = JSON.parse(rawBatchResponse).filter((message) => (message.result)).map((message) => {
+                let mappedMessages = JSON.parse(rawBatchResponse).filter((message) => {
+                    if(message.error) {
+                        console.error(message.error);
+                        return false;
+                    }
+                    return true;
+                }).map((message) => {
                     let result = message.result;
                     let payload = result.payload;
                     let headers = payload.headers;
@@ -228,7 +232,7 @@ async function mapMessages(queryParams, nextPage = false) {
     messagesList.sort((a, b) => new Date(b.Date) - new Date(a.Date));
     console.log(messagesList.length)
     updateRenderMessagesList(messagesList.map((message) => `${message.Date} ${message.Subject} ${message.id} ${message.threadId} \n`))
-
+    document.getElementById("loading-indicator").style.visibility = "hidden";
 }
 
 function updateRenderMessagesList(output) {
@@ -252,6 +256,7 @@ function handleSignoutClick() {
 
         localStorage.removeItem('credentials');
         localStorage.removeItem('nextPageToken');
+        localStorage.removeItem('queryParams');
     }
 }
 
@@ -266,6 +271,7 @@ async function handleError(error) {
 }
 
 function requestMessages(searchParams, nextPage) {
+    document.getElementById("loading-indicator").style.visibility = "visible";
     let queryParams = localStorage.getItem('queryParams');
     queryParams = JSON.parse(queryParams);
     mapMessages({ ...queryParams, ...searchParams }, nextPage);

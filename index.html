@@ -20,15 +20,16 @@
     <div id="paginator" style="visibility: hidden;">
         <button id="newer-button" onclick="getNewerMessages()"><</button>
         <select id="page-select" onchange="setPage(this.value)" autocomplete="off"><!-- autocomplete="off" to fix bug on firefox -->
-            <option value="50">50</option>
-            <option value="100" selected="selected">100</option>
+            <option value="50" selected="selected">50</option>
+            <!--option value="100" selected="selected">100</option>
             <option value="200">200</option>
             <option value="300">300</option>
             <option value="400">400</option>
-            <option value="500">500</option>
+            <option value="500">500</option-->
         </select>
         <button id="older-button" onclick="getOlderMessages()">></button>
     </div>
+    <div id="loading-indicator" style="visibility: hidden;">Loading...</div>
 
     <pre id="content" style="white-space: pre-wrap;"></pre>
 
