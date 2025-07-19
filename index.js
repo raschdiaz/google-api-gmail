@@ -14,6 +14,9 @@ const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly';// https://www.g
 let tokenClient;
 let gapiInited = false;
 let gisInited = false;
+let defaultPageSize = 100;
+let initialTimeMs = 25;
+let timerMs = initialTimeMs;
 
 localStorage.removeItem('nextPageToken');
 
@@ -41,7 +44,7 @@ function loadGoogleAPI() {
                 }
             }
         }, function (error) {
-            console.log(error);
+            console.error(error);
             throw error;
         });
     });
@@ -78,7 +81,7 @@ function loadGoogleTokenClient() {
 function sessionInit() {
     console.log("sessionInit()");
     enableSessionButtons();
-    requestMessages({}, true);
+    requestMessages({ maxResults: defaultPageSize }, true);
 }
 
 /**
@@ -154,7 +157,75 @@ async function getMessageMetadata(messageId) {
     return output;
 }
 
-let messagesList = [];
+async function executeBatches(response) {
+    console.log("executeBatches()", response);
+    let batches = [];
+    let chunkedMessages = splitArrayIntoChunks(response.messages, 100);
+    let requestList = [];
+    let retryRequestList = [];
+    let messagesList = [];
+
+    for (const [key, chunk] of chunkedMessages.entries()) {
+
+        // You're limited to 100 calls in a single batch request. If you must make more calls than that, use multiple batch requests.
+        batches[key] = gapi.client.newBatch();
+
+        chunk.map((message) => {
+            let request = {
+                userId: 'me',
+                id: message.id,
+                format: 'metadata',
+                metadataHeaders: ['Subject', 'Date']
+            }
+            requestList.push(request);
+            const getRequest = gapi.client.gmail.users.messages.get(request);
+            batches[key].add(getRequest, { id: message.id });
+        });
+
+        await new Promise((resolve, reject) => {
+            batches[key].execute(function (responseMap, rawBatchResponse) {
+                if (responseMap.result?.error) {
+                    reject(responseMap.result.error);
+                    throw responseMap.result.error;
+                }
+                let mappedMessages = JSON.parse(rawBatchResponse).filter((message) => {
+                    if (message.error) {
+                        let originalRequest = requestList.find(request => request.id === message.id);
+                        retryRequestList.push(originalRequest);
+                        handleError(message.error);
+                        return false;
+                    }
+                    return true;
+                }).map((message) => {
+                    let result = message.result;
+                    let payload = result.payload;
+                    let headers = payload.headers;
+                    return {
+                        Subject: headers.find(header => header.name == "Subject")?.value || "",
+                        Date: headers.find(header => header.name == "Date")?.value || "",
+                        id: message.id,
+                        threadId: result.threadId
+                    }
+                })
+                messagesList.push(...mappedMessages);
+                resolve();
+            });
+        })
+    }
+
+    // Fix to 429 - rateLimitExceeded
+    if (retryRequestList.length > 0) {
+        console.log("Retry requests!", retryRequestList.length)
+        console.log("timerMs", timerMs)
+        await new Promise(r => setTimeout(r, timerMs));
+        timerMs += initialTimeMs;
+        let retryMessagesList = await executeBatches({ messages: retryRequestList });
+        messagesList = [...messagesList, ...retryMessagesList];
+    } else {
+        timerMs = initialTimeMs;
+    }
+    return messagesList;
+}
 
 async function mapMessages(queryParams, nextPage = false) {
 
@@ -174,60 +245,7 @@ async function mapMessages(queryParams, nextPage = false) {
         }
     }
 
-    let batches = [];
-    let chunkedMessages = splitArrayIntoChunks(response.messages, 50);
-    messagesList = [];
-
-    for (const [key, chunk] of chunkedMessages.entries()) {
-
-        // You're limited to 100 calls in a single batch request. If you must make more calls than that, use multiple batch requests.
-        batches[key] = gapi.client.newBatch();
-
-        chunk.map((message) => {
-            const request = gapi.client.gmail.users.messages.get({
-                userId: 'me',
-                id: message.id,
-                format: 'metadata',
-                metadataHeaders: ['Subject', 'Date']
-            });
-            batches[key].add(request);
-        });
-
-        await new Promise((resolve, reject) => {
-
-            batches[key].execute(function (responseMap, rawBatchResponse) {
-                if (responseMap.result?.error) {
-                    reject(responseMap.result.error);
-                    throw responseMap.result.error;
-                }
-                let mappedMessages = JSON.parse(rawBatchResponse).filter((message) => {
-                    if(message.error) {
-                        console.error(message.error);
-                        return false;
-                    }
-                    return true;
-                }).map((message) => {
-                    let result = message.result;
-                    let payload = result.payload;
-                    let headers = payload.headers;
-                    console.log(headers)
-                    return {
-                        Subject: headers.find(header => header.name == "Subject")?.value || "",
-                        Date: headers.find(header => header.name == "Date")?.value || "",
-                        id: message.id,
-                        threadId: result.threadId
-                    }
-                })
-
-                messagesList.push(...mappedMessages);
-                resolve();
-
-            });
-
-        })
-
-    }
-
+    let messagesList = await executeBatches(response);
     // Sort messages list by date
     messagesList.sort((a, b) => new Date(b.Date) - new Date(a.Date));
     console.log(messagesList.length)
@@ -261,16 +279,20 @@ function handleSignoutClick() {
 }
 
 async function handleError(error) {
-    if (error.status === 401) {
-        // UNAUTHENTICATED
-        // There is not a way to get and use a "refresh_token" using this logic on javascript https://stackoverflow.com/a/24468307/6774579
-        document.getElementById("authorize_button").click();
-    } else {
-        throw error;
+    let errorCode = error.status || error.code
+    switch (errorCode) {
+        case 401:
+            // UNAUTHENTICATED
+            // There is not a way to get and use a "refresh_token" using this logic on javascript https://stackoverflow.com/a/24468307/6774579
+            document.getElementById("authorize_button").click();
+            break;
+        default:
+            throw error;
     }
 }
 
 function requestMessages(searchParams, nextPage) {
+    console.log("requestMessages()", searchParams)
     document.getElementById("loading-indicator").style.visibility = "visible";
     let queryParams = localStorage.getItem('queryParams');
     queryParams = JSON.parse(queryParams);
@@ -284,30 +306,31 @@ function getNewerMessages() {
         currentPages = currentPages.slice(0, -1);
         localStorage.setItem('nextPageToken', currentPages.join(","));
         let pageToken = currentPages[currentPages.length - 1];
-        requestMessages({ pageToken });
+        requestMessages({ pageToken, maxResults: defaultPageSize });
     } else if (currentPages.length === 1) {
         // Get messages from the first page
         localStorage.setItem('nextPageToken', []);
-        requestMessages({}, true);
+        requestMessages({ maxResults: defaultPageSize }, true);
     }
 }
 
 function getOlderMessages() {
     let currentPages = localStorage.getItem('nextPageToken').split(",");
     let pageToken = currentPages[currentPages.length - 1];
-    requestMessages({ pageToken }, true);
+    requestMessages({ pageToken, maxResults: defaultPageSize }, true);
 }
 
 function filterMessages(q) {
-    requestMessages({ q });
+    requestMessages({ q, maxResults: defaultPageSize });
 }
 
 function handleRefreshClick() {
-    requestMessages({});
+    requestMessages({ maxResults: defaultPageSize });
 }
 
 function setPage(pageLength) {
-    requestMessages({ maxResults: pageLength });
+    defaultPageSize = pageLength;
+    requestMessages({ maxResults: defaultPageSize });
 }
 
 function splitArrayIntoChunks(arr, chunkSize) {

@@ -29,7 +29,7 @@ Caracteristicas:
 
 :white_check_mark: Agregar indicador de carga al realizar peticiones.
 
-:white_square_button: Revisar error al obtener ciertos mensajes.
+:white_check_mark: Revisar error al obtener ciertos mensajes HTTP: 429 - rateLimitExceeded.
 
 :pushpin: Paginación.
 
@@ -47,7 +47,11 @@ Caracteristicas:
 
 :pushpin: Vista detalle del correo.
 
+:white_square_button: Detalle.
+
 :white_square_button: Editor de texto.
+
+:white_square_button: Reenviar correo.
 
 :pushpin: Otros.
 
