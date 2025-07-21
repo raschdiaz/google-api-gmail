@@ -39,6 +39,10 @@ Caracteristicas:
 
 :white_check_mark: Permitir al usuario modificar la cantidad de mensajes a mostrar por página.
 
+:white_check_mark: Bloquear el cambio de pagina al estar en la primera.
+
+:white_square_button: Bloquear el cambio de pagina al estar en la última.
+
 :pushpin: Sesión.
 
 :white_check_mark: Mantener sesión activa.

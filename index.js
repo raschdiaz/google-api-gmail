@@ -18,8 +18,6 @@ let defaultPageSize = 100;
 let initialTimeMs = 25;
 let timerMs = initialTimeMs;
 
-localStorage.removeItem('nextPageToken');
-
 /**
     * Callback after api.js is loaded.
 */
@@ -116,6 +114,7 @@ function handleAuthClick() {
  * are found an appropriate message is printed.
  */
 async function getMessages(queryParams) {
+    console.log("getMessages()", queryParams)
     let response;
     try {
         response = await gapi.client.gmail.users.messages.list({
@@ -158,7 +157,7 @@ async function getMessageMetadata(messageId) {
 }
 
 async function executeBatches(response) {
-    console.log("executeBatches()", response);
+    console.log("executeBatches()");
     let batches = [];
     let chunkedMessages = splitArrayIntoChunks(response.messages, 100);
     let requestList = [];
@@ -236,8 +235,9 @@ async function mapMessages(queryParams, nextPage = false) {
 
     // Save nextPageToken on response
     if (nextPage) {
-        if (localStorage.getItem('nextPageToken')) {
-            let currentPages = localStorage.getItem('nextPageToken').split(",");
+        let nextPageToken = localStorage.getItem('nextPageToken');
+        if (nextPageToken) {
+            let currentPages = nextPageToken.split(",");
             currentPages.push(response.nextPageToken);
             localStorage.setItem('nextPageToken', currentPages.join(","));
         } else {
@@ -300,21 +300,28 @@ function requestMessages(searchParams, nextPage) {
 }
 
 function getNewerMessages() {
+    console.log("getNewerMessages()")
     let currentPages = localStorage.getItem('nextPageToken').split(",");
     if (currentPages.length > 1) {
-        // Get messages for the previous page
-        currentPages = currentPages.slice(0, -1);
+        // Page 2 or more
+        currentPages.pop();
         localStorage.setItem('nextPageToken', currentPages.join(","));
-        let pageToken = currentPages[currentPages.length - 1];
+        if(currentPages.length == 1) {
+            document.getElementById('newer-button').disabled = true;
+        }
+        let pageToken = currentPages[currentPages.length - 2];
         requestMessages({ pageToken, maxResults: defaultPageSize });
-    } else if (currentPages.length === 1) {
-        // Get messages from the first page
-        localStorage.setItem('nextPageToken', []);
-        requestMessages({ maxResults: defaultPageSize }, true);
+    } else if (currentPages.length == 1) {
+        // Page 1
+        requestMessages({ maxResults: defaultPageSize });
     }
 }
 
 function getOlderMessages() {
+    console.log("getOlderMessages()")
+    if (document.getElementById('newer-button').disabled) {
+        document.getElementById('newer-button').disabled = false;
+    }
     let currentPages = localStorage.getItem('nextPageToken').split(",");
     let pageToken = currentPages[currentPages.length - 1];
     requestMessages({ pageToken, maxResults: defaultPageSize }, true);
