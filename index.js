@@ -310,7 +310,12 @@ function getNewerMessages() {
             document.getElementById('newer-button').disabled = true;
         }
         let pageToken = currentPages[currentPages.length - 2];
-        requestMessages({ pageToken, maxResults: defaultPageSize });
+        if(pageToken) {
+            requestMessages({ pageToken, maxResults: defaultPageSize });
+        } else {
+            localStorage.removeItem('queryParams');
+            requestMessages({ maxResults: defaultPageSize });
+        }
     } else if (currentPages.length == 1) {
         // Page 1
         requestMessages({ maxResults: defaultPageSize });
