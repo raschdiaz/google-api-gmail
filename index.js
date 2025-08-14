@@ -305,20 +305,19 @@ function getNewerMessages() {
     if (currentPages.length > 1) {
         // Page 2 or more
         currentPages.pop();
-        localStorage.setItem('nextPageToken', currentPages.join(","));
         if(currentPages.length == 1) {
+            // Disable button to indicate the user the current page its the first one
             document.getElementById('newer-button').disabled = true;
         }
+        localStorage.setItem('nextPageToken', currentPages.join(","));
         let pageToken = currentPages[currentPages.length - 2];
         if(pageToken) {
             requestMessages({ pageToken, maxResults: defaultPageSize });
         } else {
+            // Going from page 2 to page 1
             localStorage.removeItem('queryParams');
             requestMessages({ maxResults: defaultPageSize });
         }
-    } else if (currentPages.length == 1) {
-        // Page 1
-        requestMessages({ maxResults: defaultPageSize });
     }
 }
 

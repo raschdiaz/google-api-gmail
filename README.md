@@ -31,6 +31,8 @@ Caracteristicas:
 
 :white_check_mark: Revisar error al obtener ciertos mensajes HTTP: 429 - rateLimitExceeded.
 
+:white_square_button: Corregir error de mensajes incorrectos por página cuando se reciben nuevos mensajes (users.history.list).
+
 :white_square_button: Filtro multiple: (campo texto, cantidad paginación, pagina actual).
 
 :pushpin: Paginación.
