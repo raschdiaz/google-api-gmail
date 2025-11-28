@@ -57,6 +57,12 @@ Caracteristicas:
 
 :white_square_button: Detalle.
 
+:white_check_mark: Obtener información del mensaje.
+
+:white_check_mark: Obtener archivos adjuntos del mensaje.
+
+:white_check_mark: Descargar archivos adjuntos del mensaje.
+
 :white_square_button: Editor de texto.
 
 :white_square_button: Reenviar correo.
