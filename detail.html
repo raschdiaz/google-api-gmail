@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Gmail API Quickstart - Detail</title>
+    <meta charset="utf-8" />
+</head>
+
+<body>
+    <p>Gmail API Quickstart - Detail</p>
+    <button id="authorize_button" onclick="handleAuthClick()">Authorize</button>
+    <button id="signout_button" onclick="handleSignoutClick()" style="visibility: hidden;">Sign Out</button>
+    <div id="email-content"></div>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const messageId = urlParams.get('message-id');
+
+    </script>
+    <script type="text/javascript">
+
+        function loadScriptSync(src, callback) {
+            var script = document.createElement('script');
+            script.src = src;
+            script.type = "text/javascript";
+            script.async = true;
+            script.defer = true;
+            script.onload = callback;
+            document.getElementsByTagName('body')[0].appendChild(script);
+        }
+
+        async function loadEnvironment() {
+            const response = await fetch("./environment.json");
+            return await response.json();
+        }
+
+        function downloadBase64Url(base64UrlString, filename) {
+            const mimeType = "application/octet-stream"; // Generic type for download
+            const dataURI = `data:${mimeType};base64,${base64UrlString}`; // This re-adds the type for download mechanism
+
+            const link = document.createElement('a');
+            link.href = dataURI;
+            link.download = filename; // Forces download with specified filename
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function generateLink(base64Data, contentType, filename, size) {
+            // Construct the data URI
+            const linkSource = `data:${contentType};base64,${base64Data}`;
+
+            const p = document.createElement("p");
+            // Create a temporary anchor element
+            const downloadLink = document.createElement("a");
+
+            downloadLink.onclick = function () {
+                downloadBlob(base64ToBlob(base64urlToBase64(base64Data), contentType), filename);
+            }
+
+            // Set the href attribute to the data URI
+            downloadLink.href = "#";
+
+            // Set the download attribute with the desired filename
+            // This instructs the browser to download the target instead of navigating to it
+            downloadLink.download = filename;
+            downloadLink.innerHTML = filename;
+            const label = document.createElement("label");
+            label.innerText = ` - ${size} bytes`;
+            const breakWord = document.createElement("br");
+            // Append the link to the body (required for Firefox) and click it
+            p.appendChild(downloadLink);
+            p.appendChild(label);
+            p.appendChild(breakWord);
+            document.getElementById('email-content').appendChild(p);
+            //downloadLink.click();
+
+            // Clean up: remove the link after the click
+            //document.body.removeChild(downloadLink);
+        }
+
+        function base64urlToBase64(base64url) {
+            // Replace non-url-safe characters and add padding
+            let base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+            while (base64.length % 4) {
+                base64 += '=';
+            }
+            return base64;
+        }
+
+        function base64ToBlob(base64, mimeType) {
+            const byteCharacters = atob(base64);
+            const byteArrays = [];
+            for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
+                const slice = byteCharacters.slice(offset, offset + 1024);
+                const byteNumbers = new Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
+            }
+            return new Blob(byteArrays, { type: mimeType });
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a); // Append link to body
+            a.click(); // Trigger download
+            document.body.removeChild(a); // Remove link from body
+            URL.revokeObjectURL(url); // Clean up the object URL
+        }
+
+        async function getMessageData() {
+
+            body = await getMessageMetadata(messageId);
+            console.log(body)
+            let header = body.payload.headers.filter(header => header.name == "Subject");
+            header = header.map(headerItem => `${headerItem.name} : ${headerItem.value}`);
+            header = header[0];
+            const p = document.createElement("p");
+            p.innerText = header;
+            document.getElementById('email-content').appendChild(p);
+            body.payload.parts.forEach(async partItem => {
+                console.log(partItem)
+                if (partItem.parts) {
+                    partItem.parts.forEach(async partItem2 => {
+                        //console.log(partItem2.body)
+                        if (partItem2.body.attachmentId) {
+                            //console.log(partItem2.body.attachmentId)
+                            body2 = await getMessageAttachments(messageId, partItem2.body.attachmentId);
+                            let base64 = body2.data;
+                            console.log(body2.data)
+                            generateLink(body2.data, partItem2.mimeType, partItem2.filename, body2.size);
+                        }
+                    });
+                } else if (partItem.body.attachmentId) {
+                    body2 = await getMessageAttachments(messageId, partItem.body.attachmentId);
+                    let base64 = body2.data;
+                    console.log(body2.data)
+                    generateLink(body2.data, partItem.mimeType, partItem.filename, body2.size);
+                }
+
+            });
+        }
+
+        // Load environment variables and logic synchronously
+        loadEnvironment().then((environment) => {
+            window.environment = environment;
+            loadScriptSync("index.js", function () {
+
+                const sessionInitRef = sessionInit;
+
+                // Override the original function with a new one
+                sessionInit = async function (...args) {
+                    console.log(">>> Detected that sessionInit is about to run.");
+
+                    // Call the original function with the correct context and arguments
+                    sessionInitRef.apply(this, args);
+
+                    console.log("<<< Detection logic after execution.");
+
+                    await getMessageData();
+                };
+
+                loadScriptSync("https://apis.google.com/js/api.js", window.loadGoogleAPI);
+                loadScriptSync("https://accounts.google.com/gsi/client", window.loadGoogleTokenClient);
+
+            });
+
+        });
+
+    </script>
+</body>
+
+</html>

@@ -17,6 +17,7 @@ let gisInited = false;
 let defaultPageSize = 100;
 let initialTimeMs = 25;
 let timerMs = initialTimeMs;
+let sessionInited = false;
 
 /**
     * Callback after api.js is loaded.
@@ -78,8 +79,9 @@ function loadGoogleTokenClient() {
 
 function sessionInit() {
     console.log("sessionInit()");
+    sessionInited = true;
     enableSessionButtons();
-    requestMessages({ maxResults: defaultPageSize }, true);
+    //requestMessages({ maxResults: defaultPageSize }, true);
 }
 
 /**
@@ -88,10 +90,16 @@ function sessionInit() {
 function enableSessionButtons() {
     console.log("enableSessionButtons()")
     document.getElementById('signout_button').style.visibility = 'visible';
-    document.getElementById('search').style.visibility = 'visible';
-    document.getElementById('paginator').style.visibility = 'visible';
+    if(document.getElementById('search')) {
+        document.getElementById('search').style.visibility = 'visible';
+    }
+    if(document.getElementById('paginator')) {
+        document.getElementById('paginator').style.visibility = 'visible';
+    }
     document.getElementById('authorize_button').innerText = 'Refresh';
-    document.getElementById('refresh_button').style.visibility = 'visible';
+    if(document.getElementById('refresh_button')) {
+        document.getElementById('refresh_button').style.visibility = 'visible';
+    }
 }
 
 /**
@@ -133,27 +141,34 @@ async function getMessages(queryParams) {
     return parsedResponse;
 }
 
-async function getMessageMetadata(messageId) {
+async function getMessageMetadata(messageId, returnHeaders = false) {
     let response;
     try {
         response = await gapi.client.gmail.users.messages.get({
             userId: 'me',
             id: messageId,
-            format: 'metadata',
-            metadataHeaders: ['Subject', 'Date']
+            format: 'full', // 'metadata', // 'raw'
+            metadataHeaders: ['Subject', 'Date'],
         });
     } catch (error) {
         handleError(error);
     }
-    const headers = JSON.parse(response.body).payload.headers;
-    if (!headers) {
-        handleError('No headers found.');
+    const parsedBody = JSON.parse(response.body);
+
+    if(returnHeaders) {
+        const messageHeaders = parsedBody.payload?.headers;
+        if (messageHeaders) {
+            const output = messageHeaders.reduce((output, header) => {
+                output[header.name] = header.value;
+                return output;
+            }, {});
+            return output;
+        } else {
+            handleError('No headers found.');
+        }
+    } else {
+        return parsedBody;
     }
-    const output = headers.reduce((output, header) => {
-        output[header.name] = header.value;
-        return output;
-    }, {});
-    return output;
 }
 
 async function executeBatches(response) {
@@ -249,12 +264,13 @@ async function mapMessages(queryParams, nextPage = false) {
     // Sort messages list by date
     messagesList.sort((a, b) => new Date(b.Date) - new Date(a.Date));
     console.log(messagesList.length)
-    updateRenderMessagesList(messagesList.map((message) => `${message.Date} ${message.Subject} ${message.id} ${message.threadId} \n`))
+    console.log(messagesList)
+    updateRenderMessagesList(messagesList.map((message) => `<a href="${window.location.href}/detail.html?message-id=${message.id}" target="_self">${message.Date} ${message.Subject} ${message.id} ${message.threadId}</a>\n`))
     document.getElementById("loading-indicator").style.visibility = "hidden";
 }
 
 function updateRenderMessagesList(output) {
-    document.getElementById('content').innerText = output;
+    document.getElementById('content').innerHTML = output;
 }
 
 /**
@@ -350,4 +366,19 @@ function splitArrayIntoChunks(arr, chunkSize) {
         result.push(arr.slice(i, i + chunkSize));
     }
     return result;
+}
+
+async function getMessageAttachments(messageId, attachmentId) {
+    let response;
+    try {
+        response = await gapi.client.gmail.users.messages.attachments.get({
+            userId: 'me',
+            messageId: messageId,
+            id: attachmentId
+        });
+    } catch (error) {
+        handleError(error);
+    }
+    const parsedBody = JSON.parse(response.body);
+    return parsedBody;
 }
