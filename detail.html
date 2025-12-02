@@ -46,9 +46,9 @@
         }
 
         /**
- * Validates if a string is in the standard Base64 format (RFC 4648 Section 4).
- * Allows optional padding.
- */
+         * Validates if a string is in the standard Base64 format (RFC 4648 Section 4).
+         * Allows optional padding.
+         */
         function isBase64(str) {
             if (typeof str !== 'string') return false;
             // Regex explanation:
@@ -69,7 +69,6 @@
             // Padding character (=) is generally omitted in base64url, but some implementations might allow it URL-encoded (%3D).
             // This regex assumes the common padding-free format.
             const base64UrlRegex = /^[A-Za-z0-9_-]*$/;
-
             // Additionally, check length constraint: must be a multiple of 4 if padding is considered optional, or
             // if you want to be strict with the "padding free" variant, ensure the string length % 4 is not 1 (which is invalid)
             const len = str.length;
@@ -78,6 +77,40 @@
             return base64UrlRegex.test(str);
         }
 
+        function base64urlToBase64(base64url) {
+            // Replace non-url-safe characters and add padding
+            let base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+            while (base64.length % 4) {
+                base64 += '=';
+            }
+            return base64;
+        }
+
+        function base64ToBlob(base64, mimeType) {
+            const byteCharacters = atob(base64);
+            const byteArrays = [];
+            for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
+                const slice = byteCharacters.slice(offset, offset + 1024);
+                const byteNumbers = new Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
+            }
+            return new Blob(byteArrays, { type: mimeType });
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a); // Append link to body
+            a.click(); // Trigger download
+            document.body.removeChild(a); // Remove link from body
+            URL.revokeObjectURL(url); // Clean up the object URL
+        }
 
         function generateLink(base64Data, contentType, filename, size) {
             // Construct the data URI
@@ -97,16 +130,6 @@
                 downloadBlob(blob, filename);
 
                 document.getElementById('fileElem').value = base64;
-
-                //const myFile = new File([blob], filename, {
-                //    type: blob.type,
-                //    lastModified: new Date().getTime()
-                //});
-                //const dataTransfer = new DataTransfer();
-                //dataTransfer.items.add(myFile);
-
-                //const fileInputElement = document.getElementById('fileElem');
-                //fileInputElement.files = dataTransfer.files;
             }
 
             // Set the href attribute to the data URI
@@ -114,7 +137,7 @@
 
             // Set the download attribute with the desired filename
             // This instructs the browser to download the target instead of navigating to it
-            downloadLink.download = filename;
+            //downloadLink.download = filename;
             downloadLink.innerHTML = filename;
             const label1 = document.createElement("label");
             label1.innerText = ` - ${size} bytes`;
@@ -165,41 +188,6 @@
 
             // Clean up: remove the link after the click
             //document.body.removeChild(downloadLink);
-        }
-
-        function base64urlToBase64(base64url) {
-            // Replace non-url-safe characters and add padding
-            let base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
-            while (base64.length % 4) {
-                base64 += '=';
-            }
-            return base64;
-        }
-
-        function base64ToBlob(base64, mimeType) {
-            const byteCharacters = atob(base64);
-            const byteArrays = [];
-            for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
-                const slice = byteCharacters.slice(offset, offset + 1024);
-                const byteNumbers = new Array(slice.length);
-                for (let i = 0; i < slice.length; i++) {
-                    byteNumbers[i] = slice.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                byteArrays.push(byteArray);
-            }
-            return new Blob(byteArrays, { type: mimeType });
-        }
-
-        function downloadBlob(blob, filename) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a); // Append link to body
-            a.click(); // Trigger download
-            document.body.removeChild(a); // Remove link from body
-            URL.revokeObjectURL(url); // Clean up the object URL
         }
 
         async function getMessageData() {
